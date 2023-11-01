@@ -45,8 +45,8 @@ module sram_control(
             sram_wda <= 8'b0;
         end else begin
             case (state)
-                2'h0: if (nes_rd_en || nes_wr_en) begin
-                    sram_wda <= nes_address[15:8];
+                2'h0: if (nes_rd_en || nes_wr_en || init_read) begin
+                    sram_wda <= init_read ? 8'hFF : nes_address[15:8];
                     sram_ale <= 2'b10;
                     state <= 2'h1;
                     cen_reg <= 1'b0;
@@ -58,7 +58,7 @@ module sram_control(
                     sram_ale <= 2'b00;
                 end
                 2'h1: begin
-                    sram_wda <= nes_address[7:0];
+                    sram_wda <= init_read ? 8'hFF : nes_address[7:0];
                     sram_ale <= 2'b01;
                     state <= 2'h2;
                 end
@@ -76,12 +76,14 @@ module sram_control(
                 end
                 2'h3: begin
                     nes_rd_lat <= sram_rd;
+                    if (init_read) mapper <= sram_rd;
                     // defaults
                     sram_rdn <= 1'b1;
                     sram_wdn <= 1'b1;
                     cen_reg <= 1'b1;
                     bus_oen_reg <= 1'b0;
                     sram_ale <= 2'b00;
+                    init_read <= 1'b0;
                 end
             endcase
         end
